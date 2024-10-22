@@ -720,6 +720,7 @@ class Trainer:
                             data = train_loader.next()[0]
                             mylbl = data["label"].detach().cpu().numpy()
                             myimg = data["image"].detach().cpu().numpy()
+                            print(myimg.shape)
                             import ants
                             ants.image_write(ants.from_numpy(myimg[0,0,:,:,:]), 'myimage00.nii.gz')
                             ants.image_write(ants.from_numpy(myimg[0,1,:,:,:]), 'myimage01.nii.gz')
