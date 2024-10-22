@@ -723,9 +723,9 @@ class Trainer:
                             print(myimg.shape)
                             import ants
                             ants.image_write(ants.from_numpy(myimg[0,0,:,:,:]), 'myimage00.nii.gz')
-                            #ants.image_write(ants.from_numpy(myimg[0,1,:,:,:]), 'myimage01.nii.gz')
+                            ants.image_write(ants.from_numpy(myimg[0,1,:,:,:]), 'myimage01.nii.gz')
                             ants.image_write(ants.from_numpy(myimg[1,0,:,:,:]), 'myimage10.nii.gz')
-                            #ants.image_write(ants.from_numpy(myimg[1,1,:,:,:]), 'myimage11.nii.gz')
+                            ants.image_write(ants.from_numpy(myimg[1,1,:,:,:]), 'myimage11.nii.gz')
                             ants.image_write(ants.from_numpy(mylbl[0,0,:,:,:]), 'mylabel0.nii.gz')
                             ants.image_write(ants.from_numpy(mylbl[1,0,:,:,:]), 'mylabel1.nii.gz')
                             import ipdb; ipdb.set_trace()
