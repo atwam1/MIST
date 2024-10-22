@@ -11,8 +11,8 @@ import torch.multiprocessing as mp
 from sklearn.model_selection import train_test_split
 from torch import nn
 from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.tensorboard import SummaryWriter # type: ignore
-from monai.inferers import sliding_window_inference # type: ignore
+from torch.utils.tensorboard import SummaryWriter
+from monai.inferers import sliding_window_inference
 
 # Import MIST modules.
 from mist.data_loading import dali_loader
@@ -246,7 +246,7 @@ class Trainer:
 
         # Display the start of training message.
         if rank == 0:
-            text = rich.text.Text("\nStarting training\n") # type: ignore
+            text = rich.text.Text("\nStarting training\n")
             text.stylize("bold")
             console.print(text)
 
@@ -423,7 +423,7 @@ class Trainer:
             # underflow. Gradients must be unscaled before the optimizer updates
             # the parameters to ensure the learning rate is unaffected.
             if self.mist_arguments.amp:
-                amp_gradient_scaler = torch.amp.GradScaler("cuda") # type: ignore
+                amp_gradient_scaler = torch.amp.GradScaler("cuda")
 
             # Only log metrics on first process (i.e., rank 0).
             if rank == 0:
@@ -432,7 +432,7 @@ class Trainer:
                 running_loss_validation = utils.RunningMean()
 
                 # Initialize best validation loss to infinity.
-                best_validation_loss = np.Inf # type: ignore
+                best_validation_loss = np.Inf
 
                 # Set up tensorboard summary writer.
                 writer = SummaryWriter(
@@ -474,22 +474,22 @@ class Trainer:
                         loss: Loss value for the batch.
                     """
                     # Make predictions for the batch.
-                    output = model(image) # pylint: disable=cell-var-from-loop
+                    output = model(image)
 
                     # Compute loss for the batch. The inputs to the loss
                     # function depend on the loss function being used.
                     if self.mist_arguments.use_dtms:
                         # Use distance transform maps for boundary-based loss
                         # functions.
-                        loss = loss_fn(label, output["prediction"], dtm, alpha) # pylint: disable=cell-var-from-loop
+                        loss = loss_fn(label, output["prediction"], dtm, alpha)
                     elif self.mist_arguments.loss in ["cldice"]:
                         # Use the alpha parameter to weight the cldice and
                         # dice with cross entropy loss functions.
-                        loss = loss_fn(label, output["prediction"], alpha) # pylint: disable=cell-var-from-loop
+                        loss = loss_fn(label, output["prediction"], alpha)
                     else:
                         # Use only the image and label for other loss functions
                         # like dice with cross entropy.
-                        loss = loss_fn(label, output["prediction"]) # pylint: disable=cell-var-from-loop
+                        loss = loss_fn(label, output["prediction"])
 
                     # If deep supervision is enabled, compute the additional
                     # losses from the deep supervision heads. Deep supervision
@@ -519,18 +519,18 @@ class Trainer:
                             # configuration. If distance transform maps
                             # are used, pass them to the loss function.
                             if self.mist_arguments.use_dtms:
-                                loss += 0.5 ** (k + 1) * loss_fn( # pylint: disable=cell-var-from-loop
+                                loss += 0.5 ** (k + 1) * loss_fn(
                                     label, p, dtm, alpha
                                 )
                             # If cldice loss is used, pass alpha to the loss
                             # function.
                             elif self.mist_arguments.loss in ["cldice"]:
-                                loss += 0.5 ** (k + 1) * loss_fn( # pylint: disable=cell-var-from-loop
+                                loss += 0.5 ** (k + 1) * loss_fn(
                                     label, p, alpha
                                 )
                             # Otherwise, compute the loss normally.
                             else:
-                                loss += 0.5 ** (k + 1) * loss_fn(label, p) # pylint: disable=cell-var-from-loop
+                                loss += 0.5 ** (k + 1) * loss_fn(label, p)
 
                         # Normalize the total loss from deep supervision heads
                         # using a correction factor to prevent it from
@@ -565,7 +565,7 @@ class Trainer:
                     # loss based on the L2 norm of the model's parameters.
                     if self.mist_arguments.l2_reg:
                         l2_norm_of_model_parameters = 0.0
-                        for param in model.parameters(): # pylint: disable=cell-var-from-loop
+                        for param in model.parameters():
                             l2_norm_of_model_parameters += (
                                 torch.norm(param, p=2)
                             )
@@ -581,7 +581,7 @@ class Trainer:
                     # loss based on the L1 norm of the model's parameters.
                     if self.mist_arguments.l1_reg:
                         l1_norm_of_model_parameters = 0.0
-                        for param in model.parameters(): # pylint: disable=cell-var-from-loop
+                        for param in model.parameters():
                             l1_norm_of_model_parameters += (
                                 torch.norm(param, p=1)
                             )
@@ -598,7 +598,7 @@ class Trainer:
                 # Gradients accumulate by default in PyTorch, so it's important
                 # to reset them at the start of each training iteration to avoid
                 # interference from prior batches.
-                optimizer.zero_grad() # pylint: disable=cell-var-from-loop
+                optimizer.zero_grad()
 
                 # Check if automatic mixed precision (AMP) is enabled for this
                 # training step.
@@ -626,7 +626,7 @@ class Trainer:
                     # (become zero) during training. The scaler multiplies the
                     # loss by a large factor before computing the gradients to
                     # mitigate underflow.
-                    amp_gradient_scaler.scale(loss).backward() # pylint: disable=cell-var-from-loop
+                    amp_gradient_scaler.scale(loss).backward()
 
                     # If gradient clipping is enabled, apply it after unscaling
                     # the gradients. Gradient clipping prevents exploding
@@ -635,25 +635,25 @@ class Trainer:
                     if self.mist_arguments.clip_norm:
                         # Unscale the gradients before clipping, as they were
                         # previously scaled.
-                        amp_gradient_scaler.unscale_(optimizer) # pylint: disable=cell-var-from-loop
+                        amp_gradient_scaler.unscale_(optimizer)
 
                         # Clip gradients to the maximum norm (clip_norm_max) to
                         # stabilize training.
                         torch.nn.utils.clip_grad_norm_(
-                            model.parameters(), # pylint: disable=cell-var-from-loop
+                            model.parameters(),
                             self.mist_arguments.clip_norm_max
                         )
 
                     # Perform the optimizer step to update the model parameters.
                     # This step adjusts the model's weights based on the
                     # computed gradients.
-                    amp_gradient_scaler.step(optimizer) # pylint: disable=cell-var-from-loop
+                    amp_gradient_scaler.step(optimizer)
 
                     # Update the scaler after each iteration. This adjusts the
                     # scale factor used to prevent underflows or overflows in
                     # the future. The scaler increases or decreases the scaling
                     # factor dynamically based on whether gradients overflow.
-                    amp_gradient_scaler.update() # pylint: disable=cell-var-from-loop
+                    amp_gradient_scaler.update()
                 else:
                     # If AMP is not enabled, perform the forward pass and
                     # compute the loss using float32 precision.
@@ -665,12 +665,12 @@ class Trainer:
                     # Apply gradient clipping if enabled.
                     if self.mist_arguments.clip_norm:
                         torch.nn.utils.clip_grad_norm_(
-                            model.parameters(), # pylint: disable=cell-var-from-loop
+                            model.parameters(),
                             self.mist_arguments.clip_norm_max
                         )
 
                     # Perform the optimizer step to update the model parameters.
-                    optimizer.step() # pylint: disable=cell-var-from-loop
+                    optimizer.step()
                 return loss
 
             def val_step(
@@ -695,7 +695,7 @@ class Trainer:
                     ),
                     overlap=self.mist_arguments.val_sw_overlap,
                     sw_batch_size=1,
-                    predictor=model, # pylint: disable=cell-var-from-loop
+                    predictor=model,
                     device=torch.device("cuda")
                 )
 
@@ -709,15 +709,25 @@ class Trainer:
 
                 # Only log metrics on first process (i.e., rank 0).
                 if rank == 0:
-                    with progress_bar.TrainProgressBar(
-                        epoch + 1,
-                        fold,
-                        self.mist_arguments.epochs,
-                        self.mist_arguments.steps_per_epoch
-                    ) as pb:
+                    ## with progress_bar.TrainProgressBar(
+                    ##     epoch + 1,
+                    ##     fold,
+                    ##     self.mist_arguments.epochs,
+                    ##     self.mist_arguments.steps_per_epoch
+                    ## ) as pb:
                         for _ in range(self.mist_arguments.steps_per_epoch):
                             # Get data from training loader.
                             data = train_loader.next()[0]
+                            mylbl = data["label"].detach().cpu().numpy()
+                            myimg = data["image"].detach().cpu().numpy()
+                            import ants
+                            ants.image_write(ants.from_numpy(myimg[0,0,:,:,:]), 'myimage00.nii.gz')
+                            ants.image_write(ants.from_numpy(myimg[0,1,:,:,:]), 'myimage01.nii.gz')
+                            ants.image_write(ants.from_numpy(myimg[1,0,:,:,:]), 'myimage10.nii.gz')
+                            ants.image_write(ants.from_numpy(myimg[1,1,:,:,:]), 'myimage11.nii.gz')
+                            ants.image_write(ants.from_numpy(mylbl[0,0,:,:,:]), 'mylabel0.nii.gz')
+                            ants.image_write(ants.from_numpy(mylbl[1,0,:,:,:]), 'mylabel1.nii.gz')
+                            import ipdb; ipdb.set_trace()
 
                             # Compute alpha for boundary loss functions. The
                             # alpha parameter is used to weight the boundary
@@ -821,8 +831,8 @@ class Trainer:
 
                         # Check if validation loss is lower than the current
                         # best validation loss. If so, save the model.
-                        if running_val_loss < best_validation_loss: # type: ignore
-                            text = rich.text.Text( # type: ignore
+                        if running_val_loss < best_validation_loss:
+                            text = rich.text.Text(
                                 "Validation loss IMPROVED from "
                                 f"{best_validation_loss:.4} "
                                 f"to {running_val_loss:.4}\n"
@@ -839,7 +849,7 @@ class Trainer:
                             # Otherwise, log that the validation loss did not
                             # improve and display the best validation loss.
                             # Continue training with the current model.
-                            text = rich.text.Text( # type: ignore
+                            text = rich.text.Text(
                                 "Validation loss did NOT improve from "
                                 f"{best_validation_loss:.4}\n"
                             )
@@ -902,12 +912,12 @@ class Trainer:
         # Train model
         world_size = torch.cuda.device_count()
         if world_size > 1:
-            mp.spawn( # type: ignore
+            mp.spawn(
                 self.train,
                 args=(world_size,),
                 nprocs=world_size,
                 join=True,
             )
-        # To enable pdb do not spawn multiprocessing for world_size = 1
+        # To enable pdb do not spawn multiprocessing for world_size = 1 
         else:
-            self.train(0, world_size)
+            self.train(0,world_size)
