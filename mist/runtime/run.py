@@ -743,7 +743,8 @@ class Trainer:
                 
                 if patch_counter >= 50:
                     break
-                import ipdb; ipdb.set_trace()     
+            
+            import ipdb; ipdb.set_trace()     
 
                             # Compute alpha for boundary loss functions. The
                             # alpha parameter is used to weight the boundary
