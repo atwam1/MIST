@@ -701,6 +701,8 @@ class Trainer:
 
                 return self.fixed_loss_functions["validation"](label, pred)
 
+            patch_counter=0
+
             # Train the model for the specified number of epochs.
             for epoch in range(self.mist_arguments.epochs):
                 # Make sure gradient tracking is on, and do a pass over the
@@ -716,19 +718,32 @@ class Trainer:
                     ##     self.mist_arguments.steps_per_epoch
                     ## ) as pb:
                         for _ in range(self.mist_arguments.steps_per_epoch):
+                            if patch_counter >=50:
+                                break
                             # Get data from training loader.
                             data = train_loader.next()[0]
                             mylbl = data["label"].detach().cpu().numpy()
                             myimg = data["image"].detach().cpu().numpy()
                             print(myimg.shape)
                             import ants
-                            ants.image_write(ants.from_numpy(myimg[0,0,:,:,:]), 'myimage00.nii.gz')
-                            ants.image_write(ants.from_numpy(myimg[0,1,:,:,:]), 'myimage01.nii.gz')
-                            ants.image_write(ants.from_numpy(myimg[1,0,:,:,:]), 'myimage10.nii.gz')
-                            ants.image_write(ants.from_numpy(myimg[1,1,:,:,:]), 'myimage11.nii.gz')
-                            ants.image_write(ants.from_numpy(mylbl[0,0,:,:,:]), 'mylabel0.nii.gz')
-                            ants.image_write(ants.from_numpy(mylbl[1,0,:,:,:]), 'mylabel1.nii.gz')
-                            import ipdb; ipdb.set_trace()
+                            ants.image_write(ants.from_numpy(myimg[patch_counter % myimg.shape[0], 0, :, :, :]), 
+                                             f'myimage{patch_counter:02}_00.nii.gz')
+                            ants.image_write(ants.from_numpy(myimg[patch_counter % myimg.shape[0], 1, :, :, :]), 
+                                             f'myimage{patch_counter:02}_01.nii.gz')
+                            ants.image_write(ants.from_numpy(mylbl[patch_counter % mylbl.shape[0], 0, :, :, :]), 
+                                             f'mylabel{patch_counter:02}_0.nii.gz') 
+                            #ants.image_write(ants.from_numpy(myimg[0,0,:,:,:]), 'myimage00.nii.gz')
+                            #ants.image_write(ants.from_numpy(myimg[0,1,:,:,:]), 'myimage01.nii.gz')
+                            #ants.image_write(ants.from_numpy(myimg[1,0,:,:,:]), 'myimage10.nii.gz')
+                            #ants.image_write(ants.from_numpy(myimg[1,1,:,:,:]), 'myimage11.nii.gz')
+                            #ants.image_write(ants.from_numpy(mylbl[0,0,:,:,:]), 'mylabel0.nii.gz')
+                            #ants.image_write(ants.from_numpy(mylbl[1,0,:,:,:]), 'mylabel1.nii.gz')
+                            
+                            patch_counter +=1 
+                
+                if patch_counter >= 50:
+                    break
+            import ipdb; ipdb.set_trace()     
 
                             # Compute alpha for boundary loss functions. The
                             # alpha parameter is used to weight the boundary
