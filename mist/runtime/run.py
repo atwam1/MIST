@@ -723,18 +723,21 @@ class Trainer:
                             data = train_loader.next()[0]
                             mylbl = data["label"].detach().cpu().numpy()
                             myimg = data["image"].detach().cpu().numpy()
-                            print(myimg.shape)
+                            print("myimg.shape", myimg.shape)
                             import ants
                             ants.image_write(ants.from_numpy(myimg[patch_counter % myimg.shape[0], 0, :, :, :]), f'myimage{patch_counter:02}_00.nii.gz')
-                            ants.image_write(ants.from_numpy(myimg[patch_counter % myimg.shape[0], 1, :, :, :]), f'myimage{patch_counter:02}_01.nii.gz')
-                            ants.image_write(ants.from_numpy(mylbl[patch_counter % mylbl.shape[0], 0, :, :, :]), f'mylabel{patch_counter:02}_0.nii.gz') 
+                            #ants.image_write(ants.from_numpy(myimg[patch_counter % myimg.shape[0], 1, :, :, :]), f'myimage{patch_counter:02}_01.nii.gz')
+                            #ants.image_write(ants.from_numpy(mylbl[patch_counter % mylbl.shape[0], 0, :, :, :]), f'mylabel{patch_counter:02}_0.nii.gz') 
                             #ants.image_write(ants.from_numpy(myimg[0,0,:,:,:]), 'myimage00.nii.gz')
                             #ants.image_write(ants.from_numpy(myimg[0,1,:,:,:]), 'myimage01.nii.gz')
                             #ants.image_write(ants.from_numpy(myimg[1,0,:,:,:]), 'myimage10.nii.gz')
                             #ants.image_write(ants.from_numpy(myimg[1,1,:,:,:]), 'myimage11.nii.gz')
                             #ants.image_write(ants.from_numpy(mylbl[0,0,:,:,:]), 'mylabel0.nii.gz')
                             #ants.image_write(ants.from_numpy(mylbl[1,0,:,:,:]), 'mylabel1.nii.gz')
-                            
+                            if myimg.shape[1] > 1:
+                                ants.image_write(ants.from_numpy(myimg[patch_counter % myimg.shape[0], 1, :, :, :]), f'myimage{patch_counter:02}_01.nii.gz')
+                                
+                            ants.image_write(ants.from_numpy(mylbl[patch_counter % mylbl.shape[0], 0, :, :, :]), f'mylabel{patch_counter:02}_0.nii.gz')
                             patch_counter +=1 
                 
                 if patch_counter >= 50:
