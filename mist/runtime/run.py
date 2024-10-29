@@ -22,8 +22,6 @@ from mist.runtime import loss_functions
 from mist.runtime import progress_bar
 from mist.runtime import utils
 
-import ipdb
-
 # Define console for rich.
 console = rich.console.Console()
 
