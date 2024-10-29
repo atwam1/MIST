@@ -726,12 +726,9 @@ class Trainer:
                             myimg = data["image"].detach().cpu().numpy()
                             print(myimg.shape)
                             import ants
-                            ants.image_write(ants.from_numpy(myimg[patch_counter % myimg.shape[0], 0, :, :, :]), 
-                                             f'myimage{patch_counter:02}_00.nii.gz')
-                            ants.image_write(ants.from_numpy(myimg[patch_counter % myimg.shape[0], 1, :, :, :]), 
-                                             f'myimage{patch_counter:02}_01.nii.gz')
-                            ants.image_write(ants.from_numpy(mylbl[patch_counter % mylbl.shape[0], 0, :, :, :]), 
-                                             f'mylabel{patch_counter:02}_0.nii.gz') 
+                            ants.image_write(ants.from_numpy(myimg[patch_counter % myimg[0], 0, :, :, :]), f'myimage{patch_counter:02}_00.nii.gz')
+                            ants.image_write(ants.from_numpy(myimg[patch_counter % myimg[0], 1, :, :, :]), f'myimage{patch_counter:02}_01.nii.gz')
+                            ants.image_write(ants.from_numpy(mylbl[patch_counter % mylbl[0], 0, :, :, :]), f'mylabel{patch_counter:02}_0.nii.gz') 
                             #ants.image_write(ants.from_numpy(myimg[0,0,:,:,:]), 'myimage00.nii.gz')
                             #ants.image_write(ants.from_numpy(myimg[0,1,:,:,:]), 'myimage01.nii.gz')
                             #ants.image_write(ants.from_numpy(myimg[1,0,:,:,:]), 'myimage10.nii.gz')
@@ -742,16 +739,17 @@ class Trainer:
                             patch_counter +=1 
                 
                 if patch_counter >= 50:
-                    break
-            
+                    break 
+                
             import ipdb; ipdb.set_trace()     
 
                             # Compute alpha for boundary loss functions. The
                             # alpha parameter is used to weight the boundary
                             # loss function with a region-based loss function
                             # like dice or cross entropy.
-                            alpha = self.boundary_loss_weighting_schedule(epoch)
-                            if self.mist_arguments.use_dtms:
+                            
+        alpha = self.boundary_loss_weighting_schedule(epoch)
+        if self.mist_arguments.use_dtms:
                                 # Use distance transform maps for boundary-based
                                 # loss functions. In this case, we pass them
                                 # and the alpha parameter to the train_step.
@@ -762,7 +760,7 @@ class Trainer:
                                 # Perform a single training step. Return
                                 # the loss for the batch.
                                 loss = train_step(image, label, dtm, alpha)
-                            else:
+        else:
                                 # If distance transform maps are not used, pass
                                 # None for the dtm parameter. If we are using
                                 # cldice loss, pass the alpha parameter to the
@@ -774,23 +772,23 @@ class Trainer:
                                     loss = train_step(image, label, None, None)
 
                             # Update update the learning rate scheduler.
-                            learning_rate_scheduler.step()
+        learning_rate_scheduler.step()
 
                             # Send all training losses to device 0 to add them.
-                            dist.reduce(loss, dst=0)
+        dist.reduce(loss, dst=0)
 
                             # Average the loss across all GPUs.
-                            current_loss = loss.item() / world_size
+        current_loss = loss.item() / world_size
 
                             # Update the running loss for the progress bar.
-                            running_loss = running_loss_train(current_loss)
+        running_loss = running_loss_train(current_loss)
 
                             # Update the progress bar with the running loss.
-                            pb.update(loss=running_loss)
-                else:
+        pb.update(loss=running_loss)
+        #else:
                     # For all other processes, do not display the progress bar.
                     # Repeat the training steps shown above for the other GPUs.
-                    for _ in range(self.mist_arguments.steps_per_epoch):
+        for _ in range(self.mist_arguments.steps_per_epoch):
                         # Get data from training loader.
                         data = train_loader.next()[0]
                         alpha = self.boundary_loss_weighting_schedule(epoch)
@@ -813,11 +811,11 @@ class Trainer:
                         dist.reduce(loss, dst=0)
 
                 # Wait for all processes to finish the epoch.
-                dist.barrier()
+        dist.barrier()
 
                 # Start validation. We don't need gradients on to do reporting.
-                model.eval()
-                with torch.no_grad():
+        model.eval()
+        with torch.no_grad():
                     # Only log metrics on first process (i.e., rank 0).
                     if rank == 0:
                         with progress_bar.ValidationProgressBar(
@@ -886,12 +884,12 @@ class Trainer:
                             dist.reduce(val_loss, dst=0)
 
                 # Reset training and validation loaders after each epoch.
-                train_loader.reset()
-                validation_loader.reset()
+        train_loader.reset()
+        validation_loader.reset()
 
                 # Log the running loss for training and validation after each
                 # epoch. Only log metrics on first process (i.e., rank 0).
-                if rank == 0:
+        if rank == 0:
                     # Log the running loss for validation.
                     summary_data = {
                         "Training": running_loss,
@@ -909,11 +907,11 @@ class Trainer:
                     running_loss_validation.reset_states()
 
             # Wait for all processes to finish the fold.
-            dist.barrier()
+        dist.barrier()
 
             # Close the tensorboard summary writer after each fold. Only
             # close the writer on the first process (i.e., rank 0).
-            if rank == 0:
+        if rank == 0:
                 writer.close()
 
         # Clean up processes after distributed training.
