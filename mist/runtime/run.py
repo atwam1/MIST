@@ -720,7 +720,7 @@ class Trainer:
                             if patch_counter >=50:
                                 break
                             # Get data from training loader.
-                            data = train_loader.next()[0]
+                            data = train_loader.next()[0] #comment out to run with and without augmentation
                             mylbl = data["label"].detach().cpu().numpy()
                             myimg = data["image"].detach().cpu().numpy()
                             print("myimg.shape", myimg.shape)
